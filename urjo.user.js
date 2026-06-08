@@ -10,13 +10,10 @@
 // @author      nothing0074
 // @description vibe coded
 // ==/UserScript==
-// This function maps the DOM structure to your text format
-function convertGridToText() {
+// Function to generate the grid text
+function getGridText() {
     const containers = document.querySelectorAll('.css-fgcs3g');
-    const totalElements = containers.length;
-    // Calculate row length (assuming a square grid)
-    const gridSize = Math.sqrt(totalElements);
-
+    const gridSize = Math.sqrt(containers.length);
     let output = "";
 
     containers.forEach((container, index) => {
@@ -24,29 +21,41 @@ function convertGridToText() {
         const span = container.querySelector('span');
         const number = span ? span.innerText.trim() : "";
 
-        let type = ":U_:"; // Default for no identifier
+        let type = ":U_:";
+        if (button.classList.contains('x')) type = ":R_:";
+        else if (button.classList.contains('o')) type = ":B_:";
 
-        if (button.classList.contains('x')) {
-            type = ":R_:";
-        } else if (button.classList.contains('o')) {
-            type = ":B_:";
-        }
-
-        // Replace "_" with the number if it exists
-        if (number !== "") {
-            type = type.replace("_", number);
-        }
+        if (number !== "") type = type.replace("_", number);
 
         output += type + " ";
-
-        // Add a newline character at the end of each row
-        if ((index + 1) % gridSize === 0) {
-            output += "\n";
-        }
+        if ((index + 1) % gridSize === 0) output += "\n";
     });
-
-    console.log(output);
     return output;
 }
 
-convertGridToText();
+// Function to create and inject the button
+function createCopyButton() {
+    const btn = document.createElement('button');
+    btn.innerText = "Copy Grid to Clipboard";
+    btn.style.position = "fixed";
+    btn.style.top = "10px";
+    btn.style.right = "10px";
+    btn.style.zIndex = "9999";
+    btn.style.padding = "10px";
+    btn.style.cursor = "pointer";
+
+    btn.onclick = async () => {
+        const text = getGridText();
+        try {
+            await navigator.clipboard.writeText(text);
+            alert("Grid copied to clipboard!");
+        } catch (err) {
+            console.error("Failed to copy: ", err);
+        }
+    };
+
+    document.body.appendChild(btn);
+}
+
+// Initialize
+createCopyButton();
