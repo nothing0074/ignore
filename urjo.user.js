@@ -59,3 +59,35 @@ function createCopyButton() {
 
 // Initialize
 createCopyButton();
+function getGridText() {
+    const containers = document.querySelectorAll('.css-fgcs3g');
+    const gridSize = Math.sqrt(containers.length);
+    let output = "";
+
+    containers.forEach((container, index) => {
+        // Look for the element that holds the state (x, o, or neutral)
+        const marker = container.querySelector('.button') || container.querySelector('button');
+        const span = container.querySelector('span');
+        const number = span ? span.innerText.trim() : "";
+
+        let type = ":U_:";
+
+        // Check for classes directly on the element
+        if (marker.classList.contains('x')) {
+            type = ":R_:";
+        } else if (marker.classList.contains('o')) {
+            type = ":B_:";
+        }
+        // Note: The new container provided has class 'css-18qtjxv'
+        // If that specific class indicates 'empty', it remains :U_:
+
+        // Replace "_" with the number if it exists
+        if (number !== "") {
+            type = type.replace("_", number);
+        }
+
+        output += type + " ";
+        if ((index + 1) % gridSize === 0) output += "\n";
+    });
+    return output;
+}
