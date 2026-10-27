@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#2e7d6b">
+  <title>Urjo Puzzle ID Player</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --accent: #2e7d6b;
+      --accent-dark: #205a4d;
+      --ink: #1d2927;
+      --muted: #697875;
+      --paper: #f5f7f6;
+      --card: #ffffff;
+      --line: #e3eae7;
+      --red: #d86e69;
+      --blue: #648fc4;
+      --shadow: 0 14px 40px rgba(26, 54, 46, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 50% -18%, rgba(46,125,107,.11), transparent 42rem),
+        var(--paper);
+      color: var(--ink);
+    }
+    button, input { font: inherit; }
+    button { -webkit-tap-highlight-color: transparent; }
+    .shell { width: min(100% - 32px, 1080px); margin: 0 auto; padding: 24px 0 48px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .brand-mark {
+      display: grid; place-items: center; flex: 0 0 44px; height: 44px;
+      border-radius: 14px; color: white; background: var(--accent);
+      font-size: 14px; font-weight: 800; letter-spacing: -.04em;
+      box-shadow: 0 6px 14px rgba(46,125,107,.2);
+    }
+    .brand-name { font-size: 16px; font-weight: 750; letter-spacing: -.025em; }
+    .brand-subtitle { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .top-label { color: var(--muted); font-size: 13px; }
+    .layout { display: grid; gap: 20px; }
+    .intro { margin-bottom: 20px; }
+    h1 { margin: 0; font-size: clamp(28px, 5vw, 40px); line-height: 1.08; letter-spacing: -.055em; }
+    .intro p { max-width: 610px; margin: 10px 0 0; color: var(--muted); line-height: 1.55; font-size: 16px; }
+    .card {
+      background: var(--card); border: 1px solid rgba(219,229,225,.9);
+      border-radius: 22px; box-shadow: var(--shadow);
+    }
+    .loader-card { padding: 22px; }
+    .section-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+    .section-heading h2 { margin: 0; font-size: 16px; letter-spacing: -.02em; }
+    .step {
+      display: grid; place-items: center; width: 27px; height: 27px; flex: 0 0 27px;
+      background: #e8f2ef; color: var(--accent-dark); border-radius: 9px;
+      font-size: 12px; font-weight: 800;
+    }
+    .input-row { display: flex; gap: 10px; }
+    .id-input {
+      width: 100%; min-width: 0; height: 50px; padding: 0 14px;
+      border: 1px solid var(--line); border-radius: 12px; outline: none;
+      color: var(--ink); background: #fbfcfb; font-size: 15px;
+      letter-spacing: .035em; transition: border-color .18s, box-shadow .18s;
+    }
+    .id-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(46,125,107,.13); }
+    .button {
+      display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+      min-height: 46px; padding: 0 17px; border: 1px solid transparent;
+      border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 14px;
+      transition: transform .16s, background .16s, border-color .16s, box-shadow .16s;
+    }
+    .button:hover { transform: translateY(-1px); }
+    .button:active { transform: translateY(0); }
+    .button:focus-visible, .cell:focus-visible, .id-input:focus-visible { outline: 3px solid rgba(46,125,107,.3); outline-offset: 2px; }
+    .button-primary { color: white; background: var(--accent); box-shadow: 0 5px 12px rgba(46,125,107,.17); }
+    .button-primary:hover { background: var(--accent-dark); }
+    .button-secondary { color: var(--ink); background: #fff; border-color: var(--line); }
+    .button-secondary:hover { background: #f7faf8; border-color: #cbdad5; }
+    .button-quiet { color: var(--muted); background: transparent; border-color: transparent; }
+    .button-quiet:hover { color: var(--ink); background: #f2f6f4; }
+    .helper { color: var(--muted); font-size: 13px; margin: 10px 0 0; line-height: 1.45; }
+    .message { display: none; margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: 13px; line-height: 1.45; }
+    .message.show { display: block; }
+    .message.error { background: #fff0ef; color: #8f3430; }
+    .message.info { background: #edf5f2; color: #315b50; }
+    .message.warning { background: #fff7e8; color: #78561d; }
+    .play-card { padding: 22px; min-width: 0; }
+    .board-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .board-title { margin: 0; font-size: 20px; letter-spacing: -.035em; }
+    .board-meta { margin-top: 5px; color: var(--muted); font-size: 13px; }
+    .board-actions { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+    .board-actions .button { min-height: 40px; padding: 0 12px; font-size: 13px; }
+    .board-actions [hidden] { display: none; }
+    .board-area { display: grid; place-items: center; padding: 10px 0 16px; }
+    .board {
+      --n: 4;
+      display: grid;
+      grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+      width: min(100%, 510px);
+      aspect-ratio: 1;
+      padding: 2px;
+      gap: 1px;
+      border-radius: 10px;
+      background: #dce4e0;
+      border: 1px solid #cbd6d1;
+    }
+    .cell {
+      position: relative; display: grid; place-items: center; min-width: 0; min-height: 0;
+      border: 1px solid rgba(36,64,55,.16); border-radius: 50%; cursor: pointer;
+      background: linear-gradient(100deg, rgba(228,91,97,.2) 50%, rgba(77,131,210,.2) 50%); color: #53615e; font-size: clamp(16px, 4vw, 25px);
+      font-weight: 750; transition: background .17s, transform .17s, box-shadow .17s;
+      box-shadow: none;
+    }
+    .cell:hover:not(:disabled) { transform: scale(.96); }
+    .mistakes { margin-top: 5px; font-size: 13px; font-weight: 700; color: var(--accent-dark); }
+    .mistakes.has { color: #b03a36; }
+    .cell.rejected-red { background: linear-gradient(100deg, rgba(112,121,118,.62) 50%, rgba(77,131,210,.42) 50%); }
+    .cell.rejected-blue { background: linear-gradient(100deg, rgba(228,91,97,.42) 50%, rgba(112,121,118,.62) 50%); }
+    .cell.red { background: #e45b61; color: white; border-color: rgba(105,25,30,.22); }
+    .cell.blue { background: #4d83d2; color: white; border-color: rgba(25,54,100,.22); }
+    .cell.given { cursor: default; box-shadow: inset 0 0 0 2px rgba(20,39,34,.19); }
+    .cell.given:hover { transform: none; }
+    .cell-number {
+      position: absolute; top: 5px; left: 7px; display: grid; place-items: center;
+      min-width: 19px; height: 19px; padding: 0 4px; border-radius: 4px;
+      color: #24332f; background: rgba(255,255,255,.94); font-size: 11px; line-height: 1;
+      font-weight: 800;
+    }
+    .cell.given .cell-number { background: rgba(255,255,255,.94); }
+    .board-placeholder {
+      width: min(100%, 510px); aspect-ratio: 1; display: grid; place-items: center;
+      text-align: center; padding: 24px; color: var(--muted);
+      border: 1px dashed #ccd9d4; border-radius: 18px; background: #fafcfb;
+    }
+    .placeholder-inner { max-width: 250px; }
+    .placeholder-glyph {
+      display: grid; grid-template-columns: repeat(2, 19px); gap: 4px;
+      width: max-content; margin: 0 auto 14px; transform: rotate(-5deg);
+    }
+    .placeholder-glyph span { width: 19px; height: 19px; border-radius: 5px; background: #dce8e3; }
+    .placeholder-glyph span:nth-child(2), .placeholder-glyph span:nth-child(3) { background: #b5d1c7; }
+    .placeholder-inner strong { display: block; margin-bottom: 6px; color: var(--ink); font-size: 15px; }
+    .placeholder-inner p { margin: 0; font-size: 13px; line-height: 1.5; }
+    .legend { display: flex; align-items: center; justify-content: center; gap: 17px; flex-wrap: wrap; color: var(--muted); font-size: 12px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 14px; height: 14px; border-radius: 4px; }
+    .swatch.red { background: var(--red); }
+    .swatch.blue { background: var(--blue); }
+    .swatch.given { background: #e9efec; border: 2px solid #95aaa2; }
+    .result {
+      display: none; margin-top: 15px; padding: 12px 14px; border-radius: 12px;
+      background: #edf5f2; color: #315b50; font-size: 14px; line-height: 1.45;
+    }
+    .result.show { display: block; }
+    .result.wrong { background: #fff5e8; color: #76531d; }
+    .creator-card { padding: 22px; margin-top: 18px; }
+    .creator-heading { margin-bottom: 20px; }
+    .creator-heading h2 { margin: 0; font-size: 22px; letter-spacing: -.04em; }
+    .creator-heading p { max-width: 560px; margin: 7px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+    .creator-controls { display: flex; align-items: end; gap: 16px; margin-bottom: 18px; }
+    .creator-field { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weight: 650; }
+    .random-settings-area { position: relative; margin-top: 16px; }
+    .random-launch { position: relative; }
+    .random-launch .creator-open { margin-top: 0; padding-right: 62px; }
+    .random-settings-toggle {
+      position: absolute; top: 5px; right: 5px; min-height: 36px; padding: 0 10px;
+      border: 1px solid rgba(29,41,39,.15); border-radius: 9px;
+      background: rgba(255,255,255,.92); color: var(--ink); cursor: pointer;
+      font-size: 12px; font-weight: 750;
+    }
+    .random-options {
+      display: grid; gap: 14px; max-height: min(68vh, 540px); overflow: auto;
+      margin-top: 8px; padding: 15px; border: 1px solid var(--line);
+      border-radius: 14px; background: #fbfcfb; box-shadow: var(--shadow);
+    }
+    .random-options[hidden] { display: none; }
+    .random-option { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 12px; color: var(--ink); font-size: 13px; font-weight: 700; }
+    .random-option output { color: var(--accent-dark); font-variant-numeric: tabular-nums; }
+    .random-option input { grid-column: 1 / -1; width: 100%; margin: 3px 0 0; accent-color: var(--accent); }
+    .clue-odds-heading { margin: 2px 0 0; color: var(--ink); font-size: 13px; font-weight: 750; }
+    .clue-odds-note { margin: -9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .clue-weight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .clue-weight { display: grid; gap: 5px; padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+    .clue-weight label { display: flex; justify-content: space-between; color: var(--ink); font-size: 12px; font-weight: 700; }
+    .clue-weight output { color: var(--accent-dark); font-variant-numeric: tabular-nums; }
+    .clue-weight input { width: 100%; margin: 0; accent-color: var(--accent); }
+    @media (max-width: 520px) { .clue-weight-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .creator-field select { min-width: 125px; height: 42px; padding: 0 10px; border: 1px solid var(--line); border-radius: 10px; background: #fbfcfb; color: var(--ink); }
+    .creator-grid-wrap { display: grid; place-items: center; padding: 0 0 18px; }
+    .creator-grid { --n: 4; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); width: min(100%, 420px); aspect-ratio: 1; padding: 2px; gap: 1px; border: 1px solid #cbd6d1; border-radius: 9px; background: #dce4e0; }
+    .creator-cell { min-width: 0; min-height: 0; border: 1px solid rgba(36,64,55,.16); border-radius: 50%; background: #fff; color: #53615e; cursor: pointer; font-size: clamp(12px, 3vw, 19px); font-weight: 750; box-shadow: none; transition: box-shadow .16s, transform .16s; }
+    .creator-cell.red { background: #e45b61; color: white; border-color: rgba(105,25,30,.22); }
+    .creator-cell.blue { background: #4d83d2; color: white; border-color: rgba(25,54,100,.22); }
+    .creator-cell:not(.given) { opacity: .82; }
+    .creator-cell.selected {
+      position: relative;
+      z-index: 2;
+      outline: 3px solid #fff;
+      outline-offset: -5px;
+      box-shadow: 0 0 0 3px var(--accent), 0 0 0 5px #fff;
+    }
+    .creator-cell.given { opacity: 1; box-shadow: inset 0 0 0 3px rgba(20,39,34,.32); }
+    .creator-grid { touch-action: none; user-select: none; -webkit-user-select: none; }
+    .creator-cell:focus-visible, .creator-tool-button:focus-visible { outline: 3px solid rgba(46,125,107,.3); outline-offset: 2px; }
+    .creator-selection { display: grid; gap: 12px; padding: 15px; border: 1px solid var(--line); border-radius: 14px; background: #fbfcfb; }
+    .creator-selected-label { margin: 0; color: var(--ink); font-size: 14px; font-weight: 700; }
+    .creator-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .creator-tools-label { width: 100%; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .creator-tool-button { min-height: 38px; padding: 0 13px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--ink); cursor: pointer; font-size: 13px; font-weight: 700; }
+    .creator-tool-button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+    .creator-tool-button:disabled { opacity: .45; cursor: not-allowed; }
+    .creator-tool-button.color-red[aria-pressed="true"] { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+    .creator-tool-button.color-blue[aria-pressed="true"] { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); }
+    .creator-tools select { height: 38px; padding: 0 9px; border: 1px solid var(--line); border-radius: 9px; background: #fff; color: var(--ink); }
+    .creator-open { width: 100%; margin-top: 16px; }
+    .zoom-exit { display: none; position: fixed; top: 12px; right: 12px; z-index: 60; }
+    .zoomed .zoom-exit { display: inline-flex; }
+    .board-area.zoomed {
+      position: fixed; inset: 0; z-index: 50; background: var(--paper);
+      display: grid; place-items: center; padding: 48px 8px 8px;
+    }
+    .board-area.zoomed .board { width: min(100vw - 16px, 100vh - 56px); }
+    .creator-workspace.zoomed {
+      position: fixed; inset: 0; z-index: 50; background: var(--paper);
+      display: grid; grid-template-columns: minmax(0, 1fr); align-content: start;
+      gap: 12px; padding: 52px 12px 16px; overflow: auto;
+    }
+    .creator-workspace.zoomed .creator-grid { width: max(260px, min(100vw - 24px, 100vh - 420px)); }
+    @media (min-width: 700px) {
+      .creator-workspace.zoomed { grid-template-columns: minmax(0, 1fr) 230px; align-content: center; align-items: center; }
+      .creator-workspace.zoomed .creator-grid { width: min(100vw - 330px, 100vh - 80px); }
+    }
+    .creator-output { display: none; margin-top: 12px; padding: 12px; border-radius: 11px; background: #edf5f2; color: #315b50; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+    .creator-output.show { display: block; }
+    @media (min-width: 700px) {
+      .creator-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 230px; align-items: center; gap: 26px; }
+      .creator-grid-wrap { padding-bottom: 0; }
+      .creator-grid { width: min(100%, 390px); }
+      .creator-selection { align-content: center; }
+    }
+    .creator-output code { display: block; margin-top: 5px; color: var(--ink); font-size: 13px; }
+    .tips { padding: 20px 22px; }
+    .tips h2 { margin: 0 0 13px; font-size: 15px; letter-spacing: -.02em; }
+    .tips-list { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+    .tips-list li { display: flex; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .tip-dot { flex: 0 0 20px; display: grid; place-items: center; height: 20px; border-radius: 7px; color: var(--accent-dark); background: #e8f2ef; font-size: 11px; font-weight: 800; }
+    .footer-note { margin: 18px 3px 0; color: #87938f; font-size: 12px; line-height: 1.5; }
+    @media (min-width: 900px) {
+      .shell { padding-top: 30px; }
+      .topbar { margin-bottom: 38px; }
+      .layout { grid-template-columns: minmax(0, 1fr) 310px; align-items: start; gap: 22px; }
+      .main-column { min-width: 0; }
+      .side-column { display: grid; gap: 18px; }
+      .intro { margin-bottom: 22px; }
+      .loader-card, .play-card { padding: 26px; }
+      .tips { padding: 22px; }
+      .board-title { font-size: 22px; }
+    }
+    @media (max-width: 520px) {
+      .shell { width: min(100% - 22px, 1080px); padding-top: 16px; }
+      .top-label { display: none; }
+      .loader-card, .play-card { padding: 17px; border-radius: 18px; }
+      .input-row { flex-direction: column; }
+      .input-row .button { width: 100%; }
+      .board-top { display: block; }
+      .board-actions { justify-content: flex-start; margin-top: 13px; }
+      .board { gap: 1px; padding: 2px; }
+      .cell-number { top: 3px; left: 4px; min-width: 16px; height: 16px; padding: 0 3px; font-size: 9px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">UP</div>
+        <div>
+          <div class="brand-name">Urjo Puzzle ID Player</div>
+          <div class="brand-subtitle">Logic, one cell at a time</div>
+        </div>
+      </div>
+      <div class="top-label">A quiet place to solve</div>
+    </header>
+
+    <div class="layout">
+      <div class="main-column">
+        <section class="intro" aria-labelledby="page-title">
+          <h1 id="page-title">Your next puzzle<br>starts with an ID.</h1>
+          <p>Paste a Urjo puzzle ID to open its grid. Fill each cell with your guess, then check your solution whenever you’re ready.</p>
+        </section>
+
+        <section class="card loader-card" aria-labelledby="load-title">
+          <div class="section-heading">
+            <span class="step" aria-hidden="true">01</span>
+            <h2 id="load-title">Load a puzzle</h2>
+          </div>
+          <form id="load-form">
+            <div class="input-row">
+              <input id="puzzle-id" class="id-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Puzzle ID" placeholder="Paste your puzzle ID">
+              <button class="button button-primary" type="submit">Open puzzle</button>
+            </div>
+            <p class="helper">Puzzle IDs use letters, numbers, hyphens, and underscores. The grid size is determined by the ID.</p>
+            <div id="load-message" class="message" role="status" aria-live="polite"></div>
+          </form>
+        </section>
+
+        <section class="card creator-card" aria-labelledby="creator-title">
+          <div class="creator-heading">
+            <h2 id="creator-title">Design your own challenge</h2>
+            <p>Set the colors and clues, then create a puzzle ID you can share with other solvers.</p>
+          </div>
+          <div class="creator-controls">
+            <label class="creator-field" for="creator-size">Grid size
+              <select id="creator-size">
+                <option value="4">4 × 4</option>
+
+                <option value="6">6 × 6</option>
+                <option value="8">8 × 8</option>
+                <option value="10">10 × 10</option>
+              </select>
+            </label>
+            <button id="creator-zoom" class="creator-tool-button" type="button">Zoom grid</button>
+            <span class="helper" style="margin:0">Select a square to edit its color, clue, or fixed state.</span>
+          </div>
+
+          <div class="creator-workspace">
+            <div class="creator-grid-wrap">
+              <button class="button button-secondary zoom-exit" type="button" data-exit="creator">Exit zoom</button>
+              <div id="creator-grid" class="creator-grid" aria-label="Puzzle creator grid"></div>
+            </div>
+            <div>
+              <div class="creator-selection">
+                <span id="creator-selected-label" class="creator-selected-label">Selected cell: row 1, column 1</span>
+                <button id="creator-multi-select" class="creator-tool-button" type="button" aria-pressed="false">Select multiple</button>
+                <div class="creator-tools" aria-label="Creator history">
+                  <button id="creator-undo" class="creator-tool-button" type="button" disabled>Undo</button>
+                  <button id="creator-redo" class="creator-tool-button" type="button" disabled>Redo</button>
+                </div>
+                <div class="creator-tools">
+                  <span class="creator-tools-label">Cell color</span>
+                  <button id="creator-red" class="creator-tool-button color-red" type="button" aria-pressed="false">Red</button>
+                  <button id="creator-blue" class="creator-tool-button color-blue" type="button" aria-pressed="true">Blue</button>
+                  <button id="creator-given" class="creator-tool-button" type="button">Make fixed</button>
+                </div>
+                <div class="creator-tools">
+                  <label class="creator-tools-label" for="creator-clue">Clue number</label>
+                  <select id="creator-clue" aria-label="Clue number">
+                    <option value="">None</option>
+                    <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                    <option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+                    <option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option>
+                  </select>
+                </div>
+              </div>
+              <p class="helper">Fixed cells stay visible during play. Clues are saved in the puzzle ID.</p>
+              <button id="creator-open" class="button button-primary creator-open" type="button">Create and open challenge</button>
+              <div class="random-settings-area">
+                <div class="random-launch">
+                  <button id="creator-random" class="button button-secondary creator-open" type="button">Random challenge</button>
+                  <button id="random-settings-toggle" class="random-settings-toggle" type="button" aria-expanded="false" aria-controls="random-options" aria-label="Open random challenge settings">Odds</button>
+                </div>
+                <div id="random-options" class="random-options" aria-label="Random challenge settings" hidden>
+                  <label class="random-option" for="random-red-chance">
+                    <span>Red cells</span>
+                    <output id="random-red-value" for="random-red-chance">50%</output>
+                    <input id="random-red-chance" type="range" min="0" max="100" value="50">
+                  </label>
+                  <label class="random-option" for="random-clue-chance">
+                    <span>Cells with number clues</span>
+                    <output id="random-clue-value" for="random-clue-chance">22%</output>
+                    <input id="random-clue-chance" type="range" min="0" max="100" value="22">
+                  </label>
+                  <label class="random-option" for="random-fixed-chance">
+                    <span>Fixed cells</span>
+                    <output id="random-fixed-value" for="random-fixed-chance">15%</output>
+                    <input id="random-fixed-chance" type="range" min="0" max="100" value="15">
+                  </label>
+                  <h3 class="clue-odds-heading">Odds for each clue</h3>
+                  <p class="clue-odds-note">These weights control which clue is chosen. Set a clue to 0 to exclude it.</p>
+                  <div id="clue-weight-grid" class="clue-weight-grid"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="creator-output" class="creator-output" role="status" aria-live="polite"></div>
+        </section>
+
+        <section class="card play-card" style="margin-top:18px" aria-labelledby="board-title">
+          <div class="board-top">
+            <div>
+              <h2 class="board-title" id="board-title">Puzzle board</h2>
+              <div class="board-meta" id="board-meta">No puzzle loaded yet</div>
+              <div class="mistakes" id="mistakes">Mistakes: 0</div>
+            </div>
+            <div class="board-actions">
+              <button id="check-button" class="button button-primary" type="button" disabled hidden>Check solution</button>
+              <button id="clear-button" class="button button-secondary" type="button" disabled>Clear guesses</button>
+              <button id="copy-button" class="button button-quiet" type="button" disabled>Copy ID</button>
+              <button id="zoom-board-button" class="button button-secondary" type="button" disabled>Zoom board</button>
+              <a id="urjo-play-button" class="button button-secondary" href="#" target="_blank" rel="noopener noreferrer" hidden>Play challenge in Urjo</a>
+            </div>
+          </div>
+
+          <div class="board-area" id="board-area">
+            <button class="button button-secondary zoom-exit" type="button" data-exit="board">Exit zoom</button>
+            <div id="board-placeholder" class="board-placeholder">
+              <div class="placeholder-inner">
+                <div class="placeholder-glyph" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                <strong>Your board will appear here</strong>
+                <p>Enter a puzzle ID above to get started.</p>
+              </div>
+            </div>
+            <div id="board" class="board" aria-label="Puzzle board" style="display:none"></div>
+          </div>
+
+          <div class="legend" aria-label="Cell colors">
+            <span class="legend-item"><span class="swatch red"></span>Red</span>
+            <span class="legend-item"><span class="swatch blue"></span>Blue</span>
+            <span class="legend-item"><span class="swatch given"></span>Given clue</span>
+          </div>
+          <div id="result" class="result" role="status" aria-live="polite"></div>
+        </section>
+      </div>
+
+      <aside class="side-column">
+        <section class="card tips">
+          <h2>How to play</h2>
+          <ul class="tips-list">
+            <li><span class="tip-dot">1</span><span>Tap the left (red) or right (blue) side of a split cell. Wrong guesses count as mistakes.</span></li>
+            <li><span class="tip-dot">2</span><span>Number clues and given cells are part of the puzzle and cannot be changed.</span></li>
+            <li><span class="tip-dot">3</span><span>Guesses are checked as you place them, and the puzzle is solved when every cell is filled.</span></li>
+          </ul>
+        </section>
+        <section class="card tips">
+          <h2>About puzzle IDs</h2>
+          <p style="margin:0;color:var(--muted);font-size:13px;line-height:1.55">Each character describes one cell. The full ID contains the solution colors, given cells, and any number clues.</p>
+          <div id="self-test" class="message info show" style="margin-top:14px" role="status"></div>
+        </section>
+      </aside>
+    </div>
+    <p class="footer-note">This player reads puzzles directly from their ID. Your guesses stay in this visit when the player is hosted in Rudder.chat.</p>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      const alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
+      const SESSION_KEY = "urjo-puzzle-player-state-v1";
+      const $ = (id) => document.getElementById(id);
+      const input = $("puzzle-id");
+      const board = $("board");
+      const placeholder = $("board-placeholder");
+      const meta = $("board-meta");
+      const loadMessage = $("load-message");
+      const result = $("result");
+      const selfTest = $("self-test");
+
+      let puzzle = null;
+      let guesses = [];
+      let wrongGuesses = [];
+      let mistakes = 0;
+      let creatorSize = 4;
+      let randomRedChance = 50;
+      let randomClueChance = 22;
+      let randomFixedChance = 15;
+      let randomClueWeights = Array(15).fill(100);
+      let creatorGrid = Array.from({ length: 16 }, () => ({ red: false, given: false, number: null }));
+      let creatorSelected = 0;
+      let creatorSelectedCells = new Set([0]);
+      let creatorMultiSelect = false;
+      let creatorUndo = [];
+      let creatorRedo = [];
+      const CREATOR_HISTORY_LIMIT = 100;
+      let dragging = false;
+      let dragMoved = false;
+      let dragStart = -1;
+
+      function decodePuzzleId(id) {
+        if (typeof id !== "string" || id.length === 0) {
+          throw new Error("Enter a puzzle ID to continue.");
+        }
+        const clean = id.trim();
+        if (!clean) throw new Error("Enter a puzzle ID to continue.");
+        for (const character of clean) {
+          if (!alphabet.includes(character)) {
+            throw new Error("Puzzle IDs can contain numbers, letters, hyphens, and underscores.");
+          }
+        }
+        const size = Math.sqrt(clean.length);
+        if (!Number.isInteger(size)) {
+          throw new Error("This ID has " + clean.length + " characters, so it cannot form a square grid.");
+        }
+        const grid = Array.from(clean, (character) => {
+          const code = alphabet.indexOf(character);
+          return {
+            red: Boolean((code >> 1) & 1),
+            given: Boolean(code & 1),
+            number: code < 4 ? null : (code >> 2) - 1
+          };
+        });
+        return { size, grid };
+      }
+
+      function encodePuzzleId(grid) {
+        if (!Array.isArray(grid) || grid.length === 0) {
+          throw new Error("A non-empty grid is needed to make an ID.");
+        }
+        const size = Math.sqrt(grid.length);
+        if (!Number.isInteger(size)) throw new Error("The grid must contain a square number of cells.");
+        return grid.map((cell) => {
+          if (!cell || typeof cell.red !== "boolean" || typeof cell.given !== "boolean") {
+            throw new Error("Each cell needs a red color and given value.");
+          }
+          const number = cell.number == null ? null : Number(cell.number);
+          if (number !== null && (!Number.isInteger(number) || number < 0 || number > 14)) {
+            throw new Error("Number clues must be whole numbers from 0 to 14.");
+          }
+          const code = 4 * (number === null ? 0 : number + 1) + 2 * (cell.red ? 1 : 0) + (cell.given ? 1 : 0);
+          return alphabet[code];
+        }).join("");
+      }
+
+      function validatePuzzleId(id) {
+        try {
+          return { valid: true, puzzle: decodePuzzleId(id), error: "" };
+        } catch (error) {
+          return { valid: false, puzzle: null, error: error.message };
+        }
+      }
+
+      function showMessage(element, text, type) {
+        element.textContent = text;
+        element.className = "message show " + type;
+      }
+
+      function clearMessage(element) {
+        element.textContent = "";
+        element.className = "message";
+      }
+
+      function saveState() {
+        const state = {
+          id: puzzle ? input.value : "",
+          guesses: guesses.slice(),
+          wrongGuesses: wrongGuesses.slice(),
+          mistakes: mistakes,
+          randomOptions: {
+            redChance: randomRedChance,
+            clueChance: randomClueChance,
+            fixedChance: randomFixedChance,
+            clueWeights: randomClueWeights.slice()
+          },
+          creator: {
+            size: creatorSize,
+            grid: creatorGrid,
+            selected: creatorSelected,
+            selectedCells: Array.from(creatorSelectedCells),
+            multiSelect: creatorMultiSelect,
+            undo: creatorUndo,
+            redo: creatorRedo
+          }
+        };
+        try {
+          if (window.th && th.session && typeof th.session.set === "function") {
+            th.session.set(SESSION_KEY, state);
+          }
+        } catch (_) {
+          // The player remains usable if session saving is unavailable.
+        }
+      }
+
+      function creatorSnapshot() {
+        return {
+          size: creatorSize,
+          grid: creatorGrid.map(cell => ({ ...cell }))
+        };
+      }
+
+      function applyCreatorEdit(change) {
+        const before = creatorSnapshot();
+        change();
+        const after = creatorSnapshot();
+        if (JSON.stringify(before) !== JSON.stringify(after)) {
+          creatorUndo.push(before);
+          if (creatorUndo.length > CREATOR_HISTORY_LIMIT) creatorUndo.shift();
+          creatorRedo = [];
+          renderCreator();
+          saveState();
+        }
+      }
+
+      function restoreCreatorSnapshot(snapshot) {
+        creatorSize = snapshot.size;
+        creatorGrid = snapshot.grid.map(cell => ({ ...cell }));
+        creatorSelected = Math.min(creatorSelected, creatorGrid.length - 1);
+        creatorSelectedCells = new Set([creatorSelected]);
+        creatorMultiSelect = false;
+        $("creator-size").value = String(creatorSize);
+        renderCreator();
+        saveState();
+      }
+
+      function undoCreatorEdit() {
+        if (!creatorUndo.length) return;
+        creatorRedo.push(creatorSnapshot());
+        restoreCreatorSnapshot(creatorUndo.pop());
+      }
+
+      function redoCreatorEdit() {
+        if (!creatorRedo.length) return;
+        creatorUndo.push(creatorSnapshot());
+        restoreCreatorSnapshot(creatorRedo.pop());
+      }
+
+      function renderBoard() {
+        if (!puzzle) return;
+        placeholder.style.display = "none";
+        board.style.display = "grid";
+        board.style.setProperty("--n", String(puzzle.size));
+        board.replaceChildren();
+
+        puzzle.grid.forEach((cell, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "cell";
+          button.dataset.index = String(index);
+          button.setAttribute("aria-label", cellLabel(cell, index));
+          if (cell.given) {
+            button.classList.add(cell.red ? "red" : "blue", "given");
+            button.disabled = true;
+          } else {
+            const guess = guesses[index] || "";
+            const rejected = wrongGuesses[index] || "";
+            if (guess) button.classList.add(guess);
+            else if (rejected) button.classList.add("rejected-" + rejected);
+            button.addEventListener("click", (e) => {
+              const r = button.getBoundingClientRect();
+              cycleCell(index, e.clientX < r.left + r.width / 2 ? "red" : "blue");
+            });
+          }
+          if (cell.number !== null) {
+            const number = document.createElement("span");
+            number.className = "cell-number";
+            number.textContent = String(cell.number);
+            button.appendChild(number);
+          }
+          board.appendChild(button);
+        });
+
+        meta.textContent = puzzle.size + " × " + puzzle.size + " grid · " + puzzle.grid.filter(c => c.given).length + " given clues";
+        $("mistakes").textContent = "Mistakes: " + mistakes;
+        $("mistakes").classList.toggle("has", mistakes > 0);
+        $("check-button").disabled = false;
+        $("clear-button").disabled = false;
+        $("copy-button").disabled = false;
+        $("zoom-board-button").disabled = false;
+        $("urjo-play-button").href = "https://urjo.com/solve/" + input.value.trim();
+        $("urjo-play-button").hidden = false;
+        clearMessage(loadMessage);
+      }
+
+      function cellLabel(cell, index) {
+        const row = Math.floor(index / puzzle.size) + 1;
+        const column = (index % puzzle.size) + 1;
+        const guess = guesses[index];
+        const rejected = wrongGuesses[index];
+        const color = cell.given ? (cell.red ? "red given" : "blue given") : (guess || "blank");
+        return "Row " + row + ", column " + column + ", " + color +
+          (rejected ? ", " + rejected + " is ruled out" : "") +
+          (cell.number === null ? "" : ", clue " + cell.number);
+      }
+
+      function cycleCell(index, side) {
+        if (!puzzle || puzzle.grid[index].given) return;
+        if (wrongGuesses[index] === side) return;
+        clearResult();
+        if (guesses[index]) {
+          guesses[index] = "";
+        } else if (side === (puzzle.grid[index].red ? "red" : "blue")) {
+          guesses[index] = side;
+        } else {
+          wrongGuesses[index] = side;
+          mistakes++;
+        }
+        renderBoard();
+        const wrongCell = board.children[index];
+        if (!guesses[index] && wrongCell && side !== (puzzle.grid[index].red ? "red" : "blue") && wrongCell.animate) {
+          wrongCell.animate([{ transform: "translateX(-3px)" }, { transform: "translateX(3px)" }, { transform: "translateX(0)" }], { duration: 200, easing: "ease-out" });
+        }
+        const solved = puzzle.grid.every((c, i) => c.given || guesses[i]);
+        if (solved) {
+          result.textContent = "Puzzle solved with " + mistakes + (mistakes === 1 ? " mistake." : " mistakes.");
+          result.className = "result show";
+        }
+        saveState();
+      }
+
+      function renderCreator() {
+        const grid = $("creator-grid");
+        grid.style.setProperty("--n", String(creatorSize));
+        grid.replaceChildren();
+        creatorGrid.forEach((cell, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "creator-cell";
+          button.dataset.index = String(index);
+          if (cell.red) button.classList.add("red");
+          else button.classList.add("blue");
+          if (cell.given) button.classList.add("given");
+          if (creatorSelectedCells.has(index)) button.classList.add("selected");
+          button.textContent = cell.number === null ? "" : String(cell.number);
+          button.setAttribute("aria-label",
+            "Row " + (Math.floor(index / creatorSize) + 1) + ", column " + (index % creatorSize + 1) +
+            ", " + (cell.red ? "red" : "blue") + (cell.given ? ", fixed" : "") +
+            (cell.number === null ? "" : ", clue " + cell.number));
+          button.addEventListener("click", () => {
+            if (dragMoved) { dragMoved = false; return; }
+            if (creatorMultiSelect) {
+              if (creatorSelectedCells.has(index)) {
+                if (creatorSelectedCells.size > 1) creatorSelectedCells.delete(index);
+              } else {
+                creatorSelectedCells.add(index);
+              }
+              creatorSelected = index;
+            } else {
+              creatorSelected = index;
+              creatorSelectedCells = new Set([index]);
+            }
+            renderCreator();
+            saveState();
+          });
+          grid.appendChild(button);
+        });
+        const row = Math.floor(creatorSelected / creatorSize) + 1;
+        const column = (creatorSelected % creatorSize) + 1;
+        const selectedCount = creatorSelectedCells.size;
+        $("creator-selected-label").textContent = selectedCount > 1
+          ? selectedCount + " cells selected"
+          : "Selected cell: row " + row + ", column " + column;
+        $("creator-multi-select").setAttribute("aria-pressed", String(creatorMultiSelect));
+        $("creator-multi-select").textContent = creatorMultiSelect ? "Done selecting" : "Select multiple";
+        $("creator-undo").disabled = creatorUndo.length === 0;
+        $("creator-redo").disabled = creatorRedo.length === 0;
+        $("creator-given").textContent = Array.from(creatorSelectedCells).every(index => creatorGrid[index].given)
+          ? "Make editable"
+          : "Make fixed";
+        $("creator-red").setAttribute("aria-pressed", String(creatorGrid[creatorSelected].red));
+        $("creator-blue").setAttribute("aria-pressed", String(!creatorGrid[creatorSelected].red));
+        $("creator-clue").value = creatorGrid[creatorSelected].number === null ? "" : String(creatorGrid[creatorSelected].number);
+      }
+
+      function clearResult() {
+        result.textContent = "";
+        result.className = "result";
+      }
+
+      function loadPuzzle(id, savedGuesses, savedMistakes, savedWrongGuesses) {
+        const checked = validatePuzzleId(id);
+        if (!checked.valid) {
+          showMessage(loadMessage, checked.error, "error");
+          return false;
+        }
+        puzzle = checked.puzzle;
+        input.value = id.trim();
+        guesses = Array(puzzle.grid.length).fill("");
+        wrongGuesses = Array(puzzle.grid.length).fill("");
+        mistakes = Number.isInteger(savedMistakes) && savedMistakes > 0 ? savedMistakes : 0;
+        if (Array.isArray(savedWrongGuesses) && savedWrongGuesses.length === wrongGuesses.length) {
+          wrongGuesses = savedWrongGuesses.map((guess, index) =>
+            puzzle.grid[index].given ? "" : (["", "red", "blue"].includes(guess) ? guess : "")
+          );
+        }
+        if (Array.isArray(savedGuesses) && savedGuesses.length === guesses.length) {
+          guesses = savedGuesses.map((guess, index) =>
+            puzzle.grid[index].given ? "" : (["", "red", "blue"].includes(guess) ? guess : "")
+          );
+        }
+        clearResult();
+        renderBoard();
+        saveState();
+        return true;
+      }
+
+      $("load-form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        loadPuzzle(input.value);
+      });
+
+      const creatorGridEl = $("creator-grid");
+      creatorGridEl.addEventListener("pointerdown", (event) => {
+        const cellEl = event.target.closest(".creator-cell");
+        if (!cellEl) return;
+        dragging = true;
+        dragMoved = false;
+        dragStart = Number(cellEl.dataset.index);
+      });
+      creatorGridEl.addEventListener("pointermove", (event) => {
+        if (!dragging) return;
+        const under = document.elementFromPoint(event.clientX, event.clientY);
+        const cellEl = under && under.closest ? under.closest(".creator-cell") : null;
+        if (!cellEl || !creatorGridEl.contains(cellEl)) return;
+        const index = Number(cellEl.dataset.index);
+        if (index === dragStart && !dragMoved) return;
+        if (!dragMoved) {
+          dragMoved = true;
+          if (!creatorMultiSelect) creatorSelectedCells = new Set();
+          creatorSelectedCells.add(dragStart);
+        }
+        creatorSelectedCells.add(index);
+        creatorSelected = index;
+        Array.from(creatorGridEl.children).forEach((el, i) => {
+          el.classList.toggle("selected", creatorSelectedCells.has(i));
+        });
+        $("creator-selected-label").textContent = creatorSelectedCells.size + " cells selected";
+      });
+      function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        if (dragMoved) {
+          renderCreator();
+          saveState();
+          setTimeout(() => { dragMoved = false; }, 0);
+        }
+      }
+      window.addEventListener("pointerup", endDrag);
+      window.addEventListener("pointercancel", endDrag);
+
+      $("creator-size").addEventListener("change", (event) => {
+        applyCreatorEdit(() => {
+          creatorSize = Number(event.target.value);
+          creatorGrid = Array.from({ length: creatorSize * creatorSize }, () => ({ red: false, blank: true, given: false, number: null }));
+          creatorSelected = 0;
+          creatorSelectedCells = new Set([0]);
+          creatorMultiSelect = false;
+        });
+        $("creator-output").className = "creator-output";
+      });
+
+      $("creator-undo").addEventListener("click", undoCreatorEdit);
+      $("creator-redo").addEventListener("click", redoCreatorEdit);
+
+      $("creator-multi-select").addEventListener("click", () => {
+        creatorMultiSelect = !creatorMultiSelect;
+        if (!creatorMultiSelect) creatorSelectedCells = new Set([creatorSelected]);
+        renderCreator();
+        saveState();
+      });
+
+      $("creator-red").addEventListener("click", () => {
+        applyCreatorEdit(() => creatorSelectedCells.forEach(index => { creatorGrid[index].red = true; }));
+      });
+
+      $("creator-blue").addEventListener("click", () => {
+        applyCreatorEdit(() => creatorSelectedCells.forEach(index => { creatorGrid[index].red = false; }));
+      });
+
+      $("creator-given").addEventListener("click", () => {
+        const makeGiven = !Array.from(creatorSelectedCells).every(index => creatorGrid[index].given);
+        applyCreatorEdit(() => creatorSelectedCells.forEach(index => { creatorGrid[index].given = makeGiven; }));
+      });
+
+      $("creator-clue").addEventListener("change", (event) => {
+        const number = event.target.value === "" ? null : Number(event.target.value);
+        applyCreatorEdit(() => creatorSelectedCells.forEach(index => { creatorGrid[index].number = number; }));
+      });
+
+      function updateRandomOptionLabels() {
+        $("random-red-value").textContent = randomRedChance + "%";
+        $("random-clue-value").textContent = randomClueChance + "%";
+        $("random-fixed-value").textContent = randomFixedChance + "%";
+        randomClueWeights.forEach((weight, number) => {
+          const output = $("clue-weight-value-" + number);
+          const slider = $("clue-weight-" + number);
+          if (output) output.textContent = String(weight);
+          if (slider) slider.value = String(weight);
+        });
+      }
+
+      function buildClueWeightControls() {
+        const host = $("clue-weight-grid");
+        host.replaceChildren();
+        randomClueWeights.forEach((weight, number) => {
+          const wrapper = document.createElement("div");
+          wrapper.className = "clue-weight";
+          const label = document.createElement("label");
+          label.htmlFor = "clue-weight-" + number;
+          label.textContent = "Clue " + number;
+          const output = document.createElement("output");
+          output.id = "clue-weight-value-" + number;
+          output.htmlFor = "clue-weight-" + number;
+          output.textContent = String(weight);
+          label.appendChild(output);
+          const slider = document.createElement("input");
+          slider.id = "clue-weight-" + number;
+          slider.type = "range";
+          slider.min = "0";
+          slider.max = "100";
+          slider.value = String(weight);
+          slider.setAttribute("aria-label", "Clue " + number + " relative odds");
+          slider.addEventListener("input", () => {
+            randomClueWeights[number] = Number(slider.value);
+            updateRandomOptionLabels();
+            saveState();
+          });
+          wrapper.append(label, slider);
+          host.appendChild(wrapper);
+        });
+      }
+
+      $("random-red-chance").addEventListener("input", (event) => {
+        randomRedChance = Number(event.target.value);
+        updateRandomOptionLabels();
+        saveState();
+      });
+
+      $("random-clue-chance").addEventListener("input", (event) => {
+        randomClueChance = Number(event.target.value);
+        updateRandomOptionLabels();
+        saveState();
+      });
+
+      $("random-fixed-chance").addEventListener("input", (event) => {
+        randomFixedChance = Number(event.target.value);
+        updateRandomOptionLabels();
+        saveState();
+      });
+
+      $("random-settings-toggle").addEventListener("click", () => {
+        const menu = $("random-options");
+        const open = menu.hidden;
+        menu.hidden = !open;
+        $("random-settings-toggle").setAttribute("aria-expanded", String(open));
+        $("random-settings-toggle").setAttribute("aria-label", open ? "Close random challenge settings" : "Open random challenge settings");
+      });
+
+      document.addEventListener("click", (event) => {
+        if (event.target.closest(".random-settings-area")) return;
+        $("random-options").hidden = true;
+        $("random-settings-toggle").setAttribute("aria-expanded", "false");
+        $("random-settings-toggle").setAttribute("aria-label", "Open random challenge settings");
+      });
+
+      function randomClueNumber() {
+        const totalWeight = randomClueWeights.reduce((sum, weight) => sum + weight, 0);
+        if (totalWeight <= 0) return null;
+        let pick = Math.random() * totalWeight;
+        for (let number = 0; number < randomClueWeights.length; number++) {
+          pick -= randomClueWeights[number];
+          if (pick < 0) return number;
+        }
+        return randomClueWeights.length - 1;
+      }
+
+      $("creator-random").addEventListener("click", () => {
+        applyCreatorEdit(() => {
+          creatorGrid = Array.from({ length: creatorSize * creatorSize }, () => {
+            const hasClue = Math.random() * 100 < randomClueChance;
+            return {
+              red: Math.random() * 100 < randomRedChance,
+              given: Math.random() * 100 < randomFixedChance,
+              number: hasClue ? randomClueNumber() : null
+            };
+          });
+          if (creatorGrid.every(cell => cell.given)) creatorGrid[creatorGrid.length - 1].given = false;
+          creatorSelected = 0;
+          creatorSelectedCells = new Set([0]);
+          creatorMultiSelect = false;
+        });
+        try {
+          const id = encodePuzzleId(creatorGrid);
+          $("creator-output").textContent = "Random challenge ID";
+          const code = document.createElement("code");
+          code.textContent = id;
+          $("creator-output").appendChild(code);
+          $("creator-output").className = "creator-output show";
+          loadPuzzle(id);
+        } catch (error) {
+          $("creator-output").textContent = error.message;
+          $("creator-output").className = "creator-output show";
+        }
+      });
+
+      $("check-button").addEventListener("click", () => {
+        if (!puzzle) return;
+        let correct = 0;
+        let filled = 0;
+        let answerable = 0;
+        puzzle.grid.forEach((cell, index) => {
+          const guess = cell.given ? (cell.red ? "red" : "blue") : guesses[index];
+          if (guess) filled++;
+          if (!cell.given) {
+            answerable++;
+            if (guess === (cell.red ? "red" : "blue")) correct++;
+          }
+        });
+        if (correct === answerable) {
+          result.textContent = "All " + answerable + " editable cells are correct. Puzzle solved.";
+          result.className = "result show";
+        } else {
+          result.textContent = correct + " of " + answerable + " editable cells are correct. " +
+            (filled < puzzle.grid.length ? "Keep going, then check again." : "Review the colors and try again.");
+          result.className = "result show wrong";
+        }
+      });
+
+      $("clear-button").addEventListener("click", () => {
+        if (!puzzle) return;
+        guesses = Array(puzzle.grid.length).fill("");
+        wrongGuesses = Array(puzzle.grid.length).fill("");
+        mistakes = 0;
+        clearResult();
+        renderBoard();
+        saveState();
+      });
+
+      $("copy-button").addEventListener("click", async () => {
+        if (!puzzle) return;
+        const id = input.value;
+        try {
+          await navigator.clipboard.writeText(id);
+          showMessage(loadMessage, "Puzzle ID copied.", "info");
+        } catch (_) {
+          input.focus();
+          input.select();
+          showMessage(loadMessage, "Select and copy the highlighted puzzle ID.", "info");
+        }
+      });
+
+      function runSelfTest() {
+        const sample = "0023a103022022d0";
+        try {
+          const decoded = decodePuzzleId(sample);
+          const roundTrip = encodePuzzleId(decoded.grid);
+          const row0 = decoded.grid.slice(0, 4).map(c => (c.red ? "x" : "o") + (c.given ? "*" : "")).join(" ");
+          const row1 = decoded.grid.slice(4, 8).map(c => (c.red ? "x" : "o") + (c.number === null ? "" : c.number) + (c.given ? "*" : "")).join(" ");
+          const formulasWork = decoded.size === 4 && row0 === "o o x x*" && row1 === "x1 o* o x*";
+          if (!formulasWork || roundTrip !== sample) throw new Error("Core format check failed.");
+          selfTest.textContent = "Format checks passed. The supplied 4×4 sample’s last two row notes conflict with its ID; the player follows the decoding formula.";
+          selfTest.className = "message warning show";
+        } catch (_) {
+          selfTest.textContent = "The built-in format check needs attention.";
+          selfTest.className = "message error show";
+        }
+      }
+
+      async function restoreSession() {
+        if (!window.th) return;
+        try {
+          const ready = await th.ready();
+          if (ready.params && typeof ready.params.id === "string" && loadPuzzle(ready.params.id)) return;
+        } catch (_) {
+          // The player remains available if startup details are unavailable.
+        }
+        try {
+          const saved = await th.session.get(SESSION_KEY);
+          if (saved && saved.randomOptions) {
+            const redChance = Number(saved.randomOptions.redChance);
+            const clueChance = Number(saved.randomOptions.clueChance);
+            const fixedChance = Number(saved.randomOptions.fixedChance);
+            if (Number.isFinite(redChance)) randomRedChance = Math.max(0, Math.min(100, redChance));
+            if (Number.isFinite(clueChance)) randomClueChance = Math.max(0, Math.min(100, clueChance));
+            if (Number.isFinite(fixedChance)) randomFixedChance = Math.max(0, Math.min(100, fixedChance));
+            if (Array.isArray(saved.randomOptions.clueWeights)) {
+              randomClueWeights = Array.from({ length: 15 }, (_, index) => {
+                const weight = Number(saved.randomOptions.clueWeights[index]);
+                return Number.isFinite(weight) ? Math.max(0, Math.min(100, weight)) : 100;
+              });
+            }
+            $("random-red-chance").value = String(randomRedChance);
+            $("random-clue-chance").value = String(randomClueChance);
+            $("random-fixed-chance").value = String(randomFixedChance);
+            updateRandomOptionLabels();
+          }
+          if (saved && saved.creator && Array.isArray(saved.creator.grid)) {
+            const size = Number(saved.creator.size);
+            if (Number.isInteger(size) && size >= 2 && saved.creator.grid.length === size * size) {
+              creatorSize = size;
+              creatorGrid = saved.creator.grid.map(cell => ({
+                red: Boolean(cell.red),
+                blank: Boolean(cell.blank),
+                given: Boolean(cell.given),
+                number: cell.number == null ? null : Number(cell.number)
+              }));
+              creatorSelected = Math.max(0, Math.min(creatorGrid.length - 1, Number(saved.creator.selected) || 0));
+              const savedSelection = Array.isArray(saved.creator.selectedCells)
+                ? saved.creator.selectedCells.filter(index => Number.isInteger(index) && index >= 0 && index < creatorGrid.length)
+                : [creatorSelected];
+              creatorSelectedCells = new Set(savedSelection.length ? savedSelection : [creatorSelected]);
+              creatorMultiSelect = Boolean(saved.creator.multiSelect);
+              const readHistory = (items) => Array.isArray(items) ? items
+                .filter(item => item && [4, 6, 8, 10].includes(Number(item.size)) &&
+                  Array.isArray(item.grid) && item.grid.length === Number(item.size) * Number(item.size))
+                .slice(-CREATOR_HISTORY_LIMIT)
+                .map(item => ({
+                  size: Number(item.size),
+                  grid: item.grid.map(cell => ({
+                    red: Boolean(cell && cell.red),
+                    blank: Boolean(cell && cell.blank),
+                    given: Boolean(cell && cell.given),
+                    number: cell && cell.number != null ? Number(cell.number) : null
+                  }))
+                })) : [];
+              creatorUndo = readHistory(saved.creator.undo);
+              creatorRedo = readHistory(saved.creator.redo);
+              $("creator-size").value = String(creatorSize);
+            }
+          }
+          renderCreator();
+          if (saved && typeof saved.id === "string" && saved.id) loadPuzzle(saved.id, saved.guesses, saved.mistakes, saved.wrongGuesses);
+        } catch (_) {
+          renderCreator();
+        }
+      }
+
+      let zoomEl = null;
+      let zoomBack = null;
+      function setZoom(el) {
+        if (zoomEl) zoomEl.classList.remove("zoomed");
+        zoomEl = el;
+        if (el) {
+          el.classList.add("zoomed");
+          if (!zoomBack && window.th && th.back) {
+            zoomBack = th.back.push(() => { zoomBack = null; setZoom(null); });
+          }
+        } else if (zoomBack) {
+          const b = zoomBack; zoomBack = null; b.close();
+        }
+      }
+      $("creator-zoom").addEventListener("click", () => setZoom(document.querySelector(".creator-workspace")));
+      $("zoom-board-button").addEventListener("click", () => setZoom($("board-area")));
+      document.querySelectorAll(".zoom-exit").forEach(b => b.addEventListener("click", () => setZoom(null)));
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && zoomEl) setZoom(null); });
+
+      runSelfTest();
+      buildClueWeightControls();
+      updateRandomOptionLabels();
+      renderCreator();
+      restoreSession();
+
+      // Keep the format helpers available for inspection and testing.
+      window.decodePuzzleId = decodePuzzleId;
+      window.encodePuzzleId = encodePuzzleId;
+      window.validatePuzzleId = validatePuzzleId;
+    }());
+  </script>
+</body>
+</html>
